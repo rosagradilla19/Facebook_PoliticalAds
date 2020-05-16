@@ -1,0 +1,133 @@
+---
+title: "Facebook Presentation"
+output: html_document
+---
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(plotly)
+library(textreadr)
+
+```
+
+
+# Time 
+
+```{r, warning = FALSE, message = FALSE}
+data<- read.csv("CSVs/time.csv", quote="\"")
+data$political<- as.numeric(data$political)
+data$not_political<- as.numeric(data$not_political)
+data<- data %>% mutate(political_binary = ifelse(political >= not_political, "Political", "Not political")) %>% filter(political > 0 & not_political > 0)
+
+cols<- c("#B2DFEE", "#0D4F8B")
+data_plot<- data %>% group_by(Month, political_binary) %>% summarise(Count = n())
+xform <- list(categoryorder = "array", categoryarray = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+plot_ly(data_plot, x = ~Month, y = ~Count, color = ~political_binary, type = 'bar', colors = cols) %>% layout(title = "Count of Ads by Month", yaxis = list(title = 'Count'), xaxis = xform, barmode = 'group')
+
+```
+
+# Time
+
+```{r, warning = FALSE, message = FALSE}
+data<- read_csv("CSVs/randsample.csv", quote="\"")
+data<- data %>% filter(is.na(paid_for_by) == FALSE) %>% filter(Political_binary == "Political" | Political_binary == "Not political")
+nonpol_pol_avg<- data %>% group_by(Month, Political_binary) %>% summarise(average = n()/30)
+avg<- data %>% group_by(Month) %>% summarise(average = n()/30) %>% mutate("Political_binary" = "Both")
+avg <- avg[ , c("Month", "Political_binary", "average")]
+
+avg<- as.data.frame(avg)
+nonpol_pol_avg<- as.data.frame(nonpol_pol_avg)
+data_plot<- rbind(avg, nonpol_pol_avg)
+
+for (i in 1:nrow(data_plot)){
+  if (data_plot[i, 1] == "Jan"){
+    data_plot[i,4]<- 1
+  }
+  if (data_plot[i,1] == "Feb"){
+    data_plot[i,4]<- 2
+  }
+  if (data_plot[i,1] == "Mar"){
+    data_plot[i,4]<- 3
+  }
+  if (data_plot[i,1] == "Apr"){
+    data_plot[i,4]<- 4
+  }
+  if (data_plot[i,1] == "May"){
+    data_plot[i,4]<-5 
+  }
+  if (data_plot[i,1] == "Jun"){
+    data_plot[i,4]<- 6
+  }
+  if (data_plot[i,1] == "Jul"){
+    data_plot[i,4]<- 7
+  }
+  if (data_plot[i,1] == "Aug"){
+    data_plot[i,4]<- 8
+  }
+  if (data_plot[i,1] == "Sep"){
+    data_plot[i,4]<- 9
+  }
+  if (data_plot[i,1] == "Oct"){
+    data_plot[i,4]<- 10
+  }
+  if (data_plot[i,1] == "Nov"){
+    data_plot[i,4]<- 11
+  }
+  if (data_plot[i,1] == "Dec"){
+    data_plot[i,4]<- 12
+  }
+}
+
+cols<- c("#0D4F8B", "#4981CE", "#00E5EE")
+data_plot<- data_plot %>% arrange(V4)
+plot_ly(data_plot, x = ~V4, y = ~average, color = ~Political_binary, colors = cols,  type = 'scatter', mode = 'markers+lines', marker = list(size = 6.5)) %>% layout(title = "Average Ads per Month", yaxis = list(title = "Average"), xaxis = list(title = "Month"))
+
+
+```
+
+
+# Time
+
+```{r, warning = FALSE, message = FALSE}
+data<- read_csv("CSVs/political.csv")
+months<- c("Aug", "Sep", "Oct", "Nov", "Dec")
+cols<- c("#38B0DE", "#B2DFEE", "#50A6C2", "#00E5EE", "#4981CE", "#0D4F8B")
+data_plot<- data %>% filter(Month %in% months) %>% group_by(Freq, paid_for_by) %>% summarise(Count = n()) %>% arrange(desc(Count))
+data_plot<- data_plot[1:20, ]
+
+q<- plot_ly(data_plot, x = ~Freq, y = ~Count, color = ~paid_for_by, type = 'bar', colors = cols, barmode = 'group') %>% layout(title = "Top Words Used in Political Ads", yaxis = list(title = 'Count'), xaxis = list(title = 'Word'))
+
+q
+
+```
+
+# Time
+
+```{r, warning = FALSE, message = FALSE}
+data<- read_csv("CSVs/notpolitical.csv")
+months<- c("Aug", "Sep", "Oct", "Nov", "Dec")
+cols<- c("#B2DFEE", "#00688B", "#00E5EE", "#4F94CD", "#0D4F8B")
+data_plot<- data %>% filter(Month %in% months) %>% group_by(Freq, paid_for_by) %>% summarise(Count = n()) %>% arrange(desc(Count))
+data_plot<- data_plot %>% filter(Freq != "v")
+data_plot<- data_plot[1:20, ]
+data_plot<- data_plot %>% arrange(paid_for_by)
+
+q<- plot_ly(data_plot, x = ~Freq, y = ~Count, color = ~paid_for_by, type = 'bar', colors = cols, barmode = 'group') %>% layout(title = "Top Words Used in Non-political Ads", yaxis = list(title = 'Count'), xaxis = list(title = 'Word'))
+
+q
+
+```
+
+# Sentiment
+
+```{r, warning = FALSE, message = FALSE}
+data<- read_csv("CSVs/sentiment.csv")
+words<- c("trump", "children", "vote", "want", "today", "tax", "take", "climate", "gun", "abortion")
+freq<- data %>% filter(Freq %in% words & sentiment != "Neutral") %>% group_by(Freq) %>% summarise(total = n())
+data<- data %>% filter(Freq %in% words & sentiment != "Neutral") %>% group_by(Freq, sentiment) %>% count()
+plot_data<- data %>% left_join(freq, by = "Freq") %>% mutate(Prop = n/total)
+
+
+plot_ly(plot_data, x = ~Prop, y = ~Freq, type = 'bar', orientation = 'h', color = ~sentiment, colors = c("#cc5500", "#ADD8E6")) %>% layout(barmode = 'stack', title = "Proportion of Positive/Negative Sentiment for Top Words", yaxis = list(title = ""))
+
+```
