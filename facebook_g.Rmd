@@ -1,0 +1,70 @@
+---
+title: "facebook_g"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(dplyr)
+library(plotly)
+```
+
+```{r}
+#facebook <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/merged.csv', quote="\"")
+clusters_df <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/clusters_sentiment.csv', quote="\"")
+sentiment <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/freq.csv', quote="\"")
+```
+
+THIS IS SENTIMENT Political vs Not Political
+```{r}
+df <- sentiment %>% select(Month, Political_binary, sentiment)
+sentiments <- c("Positive", "Neutral", "Negative")
+political <- c("Political", "Not political")
+
+df_clean <- df %>% filter(Political_binary %in% (political) & sentiment %in% (sentiments)) 
+plot_data <- df_clean %>% group_by(Month, Political_binary, sentiment) %>% summarise(count = n())
+
+ads_per_month <- plot_data %>% group_by(Month,Political_binary) %>% select(Month, count, Political_binary)
+political_total <- ads_per_month %>% filter(Political_binary == 'Political') %>%group_by(Month) %>% summarise(total = sum(count))
+not_political_total <- ads_per_month %>% filter(Political_binary == 'Not political') %>%group_by(Month) %>% summarise(total = sum(count))
+
+plot_data_political <- plot_data %>% filter(Political_binary == 'Political')
+plot_data_not_political <- plot_data %>% filter(Political_binary == 'Not political')
+
+plot_data_political <- plot_data_political %>% left_join(political_total, by='Month')
+plot_data_not_political <- plot_data_not_political %>% left_join(not_political_total, by='Month')
+
+plot_data_political <- plot_data_political %>% mutate(prop = count/total)
+plot_data_not_political <- plot_data_not_political %>% mutate(prop = count/total)
+
+xform <- list(categoryorder = "array", categoryarray = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+cols<- c("#0D4F8B", "#4981CE", "#00E5EE")
+
+pol <- plot_ly(plot_data_political, x=~Month, color=~sentiment, y=~prop, type='bar', colors=cols)
+pol <- pol %>% layout(title='Political', xaxis=xform)
+
+not_pol <- plot_ly(plot_data_not_political, x=~Month, color=~sentiment, y=~prop, type='bar', colors=cols)
+not_pol <- not_pol %>% layout(title='Not Political', xaxis=xform)
+
+pol
+not_pol
+```
+
+THIS IS SENTIMENT BY POLITICAL CLUSTER
+```{r}
+clusters_v = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5")
+sentiments <- c("Positive", "Neutral", "Negative")
+
+df <- clusters_df %>% select('Cluster', 'sentiment') %>% filter(Cluster %in% clusters_v & sentiment %in% sentiments ) %>% group_by(Cluster, sentiment) %>% summarise(count = n()) 
+
+fig <- plot_ly(df, x=~Cluster, color=~sentiment, y=~count, type='bar', colors=cols)
+fig <- fig %>% layout(title='Sentiment by Political Cluster')
+
+fig
+```
