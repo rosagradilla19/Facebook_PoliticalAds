@@ -14,8 +14,11 @@ library(plotly)
 ```
 
 ```{r}
-#facebook <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/merged.csv', quote="\"")
+
+#This is the csv clusters_sentiment.csv
 clusters_df <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/clusters_sentiment.csv', quote="\"")
+
+#This is sentiment.csv
 sentiment <- read_csv('/Users/rosagradilla/Documents/DS_II/Distributed_computing/facebook/freq.csv', quote="\"")
 ```
 
