@@ -1,6 +1,6 @@
 # DC_facebook
 
-https://jmhobbs29.shinyapps.io/SparkProject1/
+https://jmhobbs29.shinyapps.io/shiny/?_ga=2.258090954.1927936501.1601662823-992361237.1601662823
 
 Distributed Computing Project (2): Pro Publica Collects Data on Facebook Ads
 
